@@ -1,42 +1,130 @@
+#######################################
+# Building a decision tree from scratch
+#######################################
+# Creating data set
+# Setting a random seed to ensure reproducability
+set.seed(1)
+
+# Choosing initial cluster centers
 x_1<-3
 y_1<-5
-
 x_2<-10
 y_2<-7
 
+# Creating dataframes with 20 randomly determined values and indicator variables r1 and r2
 X_1<- data.frame(x=rnorm(20,x_1,1), y=rnorm(20,y_1,1), r1=rep(1,20), r2 =rep(0,20))
 X_1
-
 X_2 <- data.frame(x=rnorm(20,x_2,1), y=rnorm(20,y_2,1), r1=rep(0,20), r2 =rep(1,20))
 X_2
 
+# Binding both variables together
 X <- rbind(X_1, X_2)
 X
 
+# Randomly distributing rows within the dataset
 X <- X[sample(nrow(X)),]
 X
 
-# Building a decision tree from scratch 
+##############################
+# Decision tree implementation
+##############################
 
 # Determine best breakpoint for each value that results in greatest information gain
 ent_x_vec <- 0
 X_x_sorted <- X[order(X$x),]
 for(i in 1:nrow(X_x_sorted)-1){
+  
   # Calculate average value for split in adjacent rows
   # based on decision tree statquest video
-  split<-mean(c(X_x_sorted$x[i] + X_x_sorted$x[i+1]))
+  split<-mean(c(X_x_sorted$x[i] , X_x_sorted$x[i+1]))
   
   # Calculate weightings from less than and greater than splits of numeric value
+  # used in final weighted entropy calculation for split i
   weight_lt_split <- length(X_x_sorted$x[X_x_sorted$x<=split])/nrow(X_x_sorted)
   weight_gt_split <- length(X_x_sorted$x[X_x_sorted$x>split])/nrow(X_x_sorted)
   
-  # Calculate entropy in each split
-  ent_lt_split <- 
+  # Calculate entropy in left and right splits, ent_0 and ent_1
+  ent_0_lhs <- sum(X_x_sorted$r1[X_x_sorted$x<=split]==0)/length(X_x_sorted$r1[X_x_sorted$x<=split])
+  ent_1_lhs <- sum(X_x_sorted$r1[X_x_sorted$x<=split]==1)/length(X_x_sorted$r1[X_x_sorted$x<=split])
   
-  # Calculate weighted something or other?
+  ent_0_rhs <- sum(X_x_sorted$r1[X_x_sorted$x>split]==0)/length(X_x_sorted$r1[X_x_sorted$x>split])
+  ent_1_rhs <-  sum(X_x_sorted$r1[X_x_sorted$x>split]==1)/length(X_x_sorted$r1[X_x_sorted$x>split])
   
+  ent_0 <- -ent_0_lhs * ifelse(ent_0_lhs==0,0,log(ent_0_lhs)) - ent_1_lhs * ifelse(ent_1_lhs==0,0,log(ent_1_lhs))
+  ent_1 <- -ent_0_rhs * ifelse(ent_0_rhs==0,0,log(ent_0_rhs)) - ent_1_rhs * ifelse(ent_1_rhs==0,0,log(ent_1_rhs))
+  
+  # calculate weighted entropy using the weights above
+  # compare all the weighted values and choose the lowest one that is your split for x
+  ent_split <- weight_lt_split * ent_0 + weight_gt_split * ent_1
   
   # Store entropy to be compared later in order to determine best split value
-  ent_x_vec[i] <- ent_x
+  ent_x_vec[i] <- ent_split
   
 }
+
+# Choosing the best split means finding the smallest value for entropy
+# which appears to occur at value 20, the value for our first feature x
+# at row 20 is:
+
+x_split <- mean(c(X_x_sorted$x[20] , X_x_sorted$x[21]))
+
+######################################################
+# Need to do the same thing for our second feature, y 
+######################################################
+
+ent_y_vec <- 0
+X_y_sorted <- X[order(X$y),]
+for(i in 1:nrow(X_y_sorted)-1){
+  
+  # Calculate average value for split in adjacent rows
+  # based on decision tree statquest video
+  split<-mean(c(X_y_sorted$y[i] , X_x_sorted$y[i+1]))
+  
+  # Calculate weightings from less than and greater than splits of numeric value
+  # used in final weighted entropy calculation for split i
+  weight_lt_split <- length(X_y_sorted$y[X_y_sorted$y<=split])/nrow(X_y_sorted)
+  weight_gt_split <- length(X_y_sorted$y[X_y_sorted$y>split])/nrow(X_y_sorted)
+  
+  # Calculate entropy in left and right splits, ent_0 and ent_1
+  ent_0_lhs <- sum(X_y_sorted$r1[X_y_sorted$y<=split]==0)/length(X_y_sorted$r1[X_y_sorted$y<=split])
+  ent_1_lhs <- sum(X_y_sorted$r1[X_y_sorted$y<=split]==1)/length(X_y_sorted$r1[X_y_sorted$y<=split])
+  
+  ent_0_rhs <- sum(X_y_sorted$r1[X_y_sorted$y>split]==0)/length(X_y_sorted$r1[X_y_sorted$y>split])
+  ent_1_rhs <-  sum(X_y_sorted$r1[X_y_sorted$y>split]==1)/length(X_y_sorted$r1[X_y_sorted$y>split])
+  
+  ent_0 <- -ent_0_lhs * ifelse(ent_0_lhs==0,0,log(ent_0_lhs)) - ent_1_lhs * ifelse(ent_1_lhs==0,0,log(ent_1_lhs))
+  ent_1 <- -ent_0_rhs * ifelse(ent_0_rhs==0,0,log(ent_0_rhs)) - ent_1_rhs * ifelse(ent_1_rhs==0,0,log(ent_1_rhs))
+  
+  # calculate weighted entropy using the weights above
+  # compare all the weighted values and choose the lowest one that is your split for x
+  ent_split <- weight_lt_split * ent_0 + weight_gt_split * ent_1
+  
+  # Store entropy to be compared later in order to determine best split value
+  ent_y_vec[i] <- ent_split
+  
+}
+
+
+# Choosing the best split means finding the smallest value for entropy
+# which appears to occur at value 19 and 20, since this is a tie I will just
+# use row 19:
+
+y_split <- mean(c(X_x_sorted$y[19] , X_x_sorted$y[19]))
+
+
+# Now that we know splits and entropy values we can calculate the information gain of 
+# each split 
+
+# Remember are dataset is evenly split between classifications hence .5 everywhere
+ent_before <- -.5 * log(.5) - .5 * log(.5)
+
+ent_after_x <- min(ent_x_vec)
+
+ent_after_y <- min(ent_y_vec)
+
+
+gain_x <- ent_before - ent_after_x
+
+gain_y <- ent_before - ent_after_y
+
+# gain X is higher than gain y so we choose x as our first split and then split on y
