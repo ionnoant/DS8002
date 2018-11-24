@@ -1,0 +1,42 @@
+x_1<-3
+y_1<-5
+
+x_2<-10
+y_2<-7
+
+X_1<- data.frame(x=rnorm(20,x_1,1), y=rnorm(20,y_1,1), r1=rep(1,20), r2 =rep(0,20))
+X_1
+
+X_2 <- data.frame(x=rnorm(20,x_2,1), y=rnorm(20,y_2,1), r1=rep(0,20), r2 =rep(1,20))
+X_2
+
+X <- rbind(X_1, X_2)
+X
+
+X <- X[sample(nrow(X)),]
+X
+
+# Building a decision tree from scratch 
+
+# Determine best breakpoint for each value that results in greatest information gain
+ent_x_vec <- 0
+X_x_sorted <- X[order(X$x),]
+for(i in 1:nrow(X_x_sorted)-1){
+  # Calculate average value for split in adjacent rows
+  # based on decision tree statquest video
+  split<-mean(c(X_x_sorted$x[i] + X_x_sorted$x[i+1]))
+  
+  # Calculate weightings from less than and greater than splits of numeric value
+  weight_lt_split <- length(X_x_sorted$x[X_x_sorted$x<=split])/nrow(X_x_sorted)
+  weight_gt_split <- length(X_x_sorted$x[X_x_sorted$x>split])/nrow(X_x_sorted)
+  
+  # Calculate entropy in each split
+  ent_lt_split <- 
+  
+  # Calculate weighted something or other?
+  
+  
+  # Store entropy to be compared later in order to determine best split value
+  ent_x_vec[i] <- ent_x
+  
+}
