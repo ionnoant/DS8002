@@ -1,0 +1,102 @@
+Question 1
+# a) Generate a toy classification problem dataset for the cartesian coordinate system 
+# with two classes (K=2).
+# b) Pick two random cluster center coordinates.
+# c) For each cluster center, generate 20 data points (samples) by adding random noise values 
+# to cluster center values.
+# d) Shuffle the dataset (randomize the order of samples in your dataset).
+# e) Implement k-means clustering algorithm and identify k cluster centers 
+# (you can experiment with different k values)
+# f) Plot cluster centers along with data points, 
+# where data points are colored by class assignments. Example:
+
+# a)
+n <- 20
+v <- 1
+x_1_mean <- 3
+y_1_mean <- 7
+
+x_2_mean <- 1
+y_2_mean <- 2
+set.seed(1)
+
+X_1 <- data.frame(x = rnorm(n, x_1_mean,v), y = rnorm(n, y_1_mean, v), 
+                  r1 = rep(1,n), r2 = rep(0,n))
+X_2 <- data.frame(x = rnorm(n, x_2_mean,v), y = rnorm(n, y_2_mean, v), 
+                  r1 = rep(0,n), r2 = rep(1,n))
+X <- rbind(X_1,X_2)
+
+num_row_X <- nrow(X)
+
+X <- X[sample(num_row_X),]
+
+# e)
+
+# Choose initial cluster centre means
+m_1_0 <- apply(X[1:20,1:2],2,mean)
+m_2_0 <- apply(X[21:40,1:2],2,mean)
+m_1_1 <- c(0,0)
+m_2_1 <- c(0,0)
+i <- 1
+while(m_1_0 != m_1_1 && m_2_0 != m_2_1){
+  if(i!=1){m_1_0 <- m_1_1; m_2_0 <- m_2_1}
+  
+  test_classes<-(apply(X[,1:2],1, function(x){ ifelse(sqrt(sum(x - m_1_0)^2) < sqrt(sum(x - m_2_0)^2),
+                                         1,0)}))
+  test_labels<-data.frame(r1_test=ifelse(test_classes==1,1,0),
+                          r2_test=ifelse(test_classes==0,1,0))
+  m_1_1 <- apply(X[test_labels$r1_test==1,1:2],2,mean)
+  m_2_1 <- apply(X[test_labels$r2_test==1,1:2],2,mean)
+  i <- i + 1
+}
+library(ggplot2)
+ggplot()+geom_point(data = X,aes(x = x, y = y, color = as.factor(test_labels$r1_test)))
+
+# Think about how you could make this more dynamic, what would you need to change
+# to allow this to conisder arbitrary values of k?
+
+# Would need to break down the dataset into k pieces
+
+k <- 3
+iter <- 0
+m_1_df<-c(0,0)
+# Calculate means for K subgroups and create new dataframe that has initial 
+# cluster groupings
+for(i in 1:k){
+
+  if(i==1){split_df <- split(X,rep(1:k))
+  m_0_df <- apply(split_df[[i]][,1:2],2,mean)
+  cluster_df <-data.frame(split_df[[i]], group = i)
+  }
+  if(i!=1){temp <- apply(split_df[[i]][,1:2],2,mean) 
+  m_0_df <- rbind(temp,m_0_df)
+  cluster_df <- rbind(cluster_df,data.frame(split_df[[i]], group = i))
+  }
+}
+
+  while(all(m_1_df!=m_0_df)){
+    if(iter!=0){m_0_df <- m_1_df}
+    print(iter)
+    test_classes<-apply(cluster_df[,1:2],1,function(x){
+  for(i in 1:k){  
+  if(i==1){temp_0<-c(sqrt(sum((x-m_0_df[i,])^2)),i)}
+  if(i!=1){temp_1<-c(sqrt(sum((x-m_0_df[i,])^2)),i)
+  ifelse(temp_1[1]<=temp_0[1],temp_0<-temp_1,temp_0)}
+  if(i==k){
+    return(temp_0[2])
+  }}})
+
+# Assign new classes to each row
+cluster_df$group <- test_classes
+
+# Calculate new group means
+for(i in 1:k){
+  if(i==1){m_1_df <- apply(cluster_df[cluster_df$group==i,1:2],2,mean,na.rm=TRUE)}
+  if(i!=1){m_1_df <- rbind(m_1_df,apply(cluster_df[cluster_df$group==i,1:2],2,mean,na.rm=TRUE))}
+}
+
+iter<-iter+1
+}
+
+  library(ggplot2)
+ggplot()+geom_point(data = cluster_df,aes(x = x, y = y, color = as.factor(group)))
