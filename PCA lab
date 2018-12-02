@@ -1,0 +1,29 @@
+attach(iris)
+head(iris)
+
+X <- iris[,1:4]
+head(X)
+var_matrix<-cor(X)
+eigen(var_matrix)
+
+for(i in 1:ncol(X)){
+  temp<-as.matrix(X[,i] - mean(X[,i]))
+  if(i==1){X_centered<-temp}
+  else{X_centered<-cbind(X_centered,temp)}
+} 
+
+X_var<-((nrow(X_centered)-1)^-1)*t(X_centered) %*% X_centered
+
+X_eigen<-eigen(X_var)
+
+dim(X_eigen$vectors)
+dim(X_centered)
+new_X<-X_centered %*% X_eigen$vectors[,1:2]
+
+plot(cumsum(X_eigen$values/sum(X_eigen$values)), type = "l")
+
+plot(-1:2,-1:2, xlab="x", ylab="y", type = "n")
+points(new_X[,1], new_X[,2])
+ 
+
+head(X_centered)
